@@ -8,7 +8,16 @@
 <style>
   html,body{margin:0;height:100%;background:#000;overflow:hidden}
   canvas{display:block;width:100vw;height:100vh;object-fit:contain;cursor:pointer}
-  #ui{position:fixed;right:14px;bottom:14px;display:flex;gap:8px;opacity:.25;transition:opacity .3s;font:13px/1 ui-monospace,Menlo,Consolas,monospace}
+  #ui{position:fixed;right:14px;bottom:14px;display:flex;gap:8px;opacity:.7;transition:opacity .3s;font:13px/1 ui-monospace,Menlo,Consolas,monospace}
+  #ui #music{border-color:rgba(255,190,240,.75);color:#ffd6f3;box-shadow:0 0 12px rgba(255,150,220,.35)}
+  #ui #music.on{border-color:rgba(255,255,255,.3);color:#eee;box-shadow:none}
+  @media (pointer:coarse){#ui{opacity:.85}#ui button{padding:11px 14px}}
+  #tap{position:fixed;left:50%;bottom:72px;transform:translateX(-50%);padding:10px 18px;border-radius:999px;background:rgba(10,10,20,.72);color:#ffd6f3;
+    border:1px solid rgba(255,190,240,.6);font:14px/1 ui-monospace,Menlo,Consolas,monospace;letter-spacing:.06em;pointer-events:none;white-space:nowrap;
+    animation:tapPulse 2.2s ease-in-out infinite;transition:opacity .8s}
+  #tap.gone{opacity:0;animation:none}
+  @keyframes tapPulse{50%{box-shadow:0 0 18px rgba(255,150,220,.55)}}
+  @media (prefers-reduced-motion:reduce){#tap{animation:none}}
   #ui:hover{opacity:1}
   #ui button{background:rgba(10,10,20,.75);color:#eee;border:1px solid rgba(255,255,255,.3);padding:8px 12px;border-radius:6px;cursor:pointer;font:inherit}
   #label{position:fixed;left:14px;bottom:14px;color:rgba(255,255,255,.55);font:12px ui-monospace,Menlo,Consolas,monospace;letter-spacing:.08em;text-shadow:0 0 6px #000;pointer-events:none}
@@ -18,6 +27,7 @@
 <body>
 <canvas id="c" width="1800" height="1100"></canvas>
 <div id="label"></div>
+<div id="tap" aria-hidden="true">♪ toca la pantalla para escuchar</div>
 <div id="ui"><button id="music">♪ música</button><button id="pause">⏸ pausa</button><button id="next">siguiente cielo ⏭</button></div>
 <div id="load">cargando cielo…</div>
 <script>
@@ -1414,13 +1424,21 @@ function musicTick() {
   if (musT0 + musStep * MUS.STEP < musicAc.currentTime - .5) { musT0 = musicAc.currentTime + .05; musStep = 0; }
   while (musT0 + musStep * MUS.STEP < ahead) { MUS.scheduleStep(musStep, musT0 + musStep * MUS.STEP); musStep++; }
 }
+// iPhone/iPad: un audio silencioso en bucle hace que la música suene aunque el teléfono esté en modo silencio
+let unlockEl = null;
+function unlockIOS() {
+  try {
+    if (!unlockEl) { unlockEl = new Audio('data:audio/wav;base64,UklGRkQDAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YSADAACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgA=='); unlockEl.loop = true; unlockEl.setAttribute('playsinline', ''); }
+    const p = unlockEl.play(); if (p && p.catch) p.catch(() => {});
+  } catch (e) {}
+}
 function toggleMusic() {
   if (!musicAc) {
     const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return false;
     musicAc = new AC(); MUS = createMusic(musicAc, musicState); musT0 = musicAc.currentTime + .1; musStep = 0;
   }
   musOn = !musOn;
-  if (musOn) { const p = musicAc.resume(); if (p && p.catch) p.catch(() => {}); MUS.fadeIn(musicAc.currentTime); if (!musTimer) musTimer = setInterval(musicTick, 25); }
+  if (musOn) { unlockIOS(); const p = musicAc.resume(); if (p && p.catch) p.catch(() => {}); MUS.fadeIn(musicAc.currentTime); if (!musTimer) musTimer = setInterval(musicTick, 25); }
   else { MUS.fadeOut(musicAc.currentTime); setTimeout(() => { if (!musOn) musicAc.suspend(); }, 900); }
   return musOn;
 }
@@ -1625,12 +1643,27 @@ function frame(now) {
 }
 
 document.getElementById('next').onclick = e => { e.stopPropagation(); if (!trans) skip = true; };
-cv.onclick = () => { if (!trans) skip = true; };
+let swallowClick = false; // el primer toque solo enciende la música, no cambia el cielo
+cv.onclick = () => { if (swallowClick) { swallowClick = false; return; } if (!trans) skip = true; };
 const pb = document.getElementById('pause');
 pb.onclick = e => { e.stopPropagation(); paused = !paused; pb.textContent = paused ? '▶ seguir' : '⏸ pausa';
   if (musicAc && musOn) { if (paused) musicAc.suspend(); else musicAc.resume(); } };
 const mb = document.getElementById('music');
-mb.onclick = e => { e.stopPropagation(); const on = toggleMusic(); mb.textContent = on ? '♪ silenciar' : '♪ música'; };
+const tapHint = document.getElementById('tap');
+function setMusicLabel(on) { mb.textContent = on ? '♪ silenciar' : '♪ música'; mb.classList.toggle('on', on); }
+mb.onclick = e => { e.stopPropagation(); firstDone(); setMusicLabel(toggleMusic()); };
+// Los navegadores no dejan sonar una página sola: la música empieza con el primer toque o tecla
+let started = false;
+function firstDone() { if (started) return; started = true; tapHint.classList.add('gone'); setTimeout(() => tapHint.remove(), 900);
+  removeEventListener('pointerdown', firstTouch, true); removeEventListener('keydown', firstTouch, true); }
+function firstTouch(e) {
+  if (started || (e.target && e.target.closest && e.target.closest('#ui'))) return;
+  if (e.type === 'pointerdown') swallowClick = true;
+  firstDone();
+  if (!musOn) setMusicLabel(toggleMusic());
+}
+addEventListener('pointerdown', firstTouch, true);
+addEventListener('keydown', firstTouch, true);
 addEventListener('keydown', e => { if (e.key === ' ') { pb.click(); e.preventDefault(); } if (e.key === 'ArrowRight' && !trans) skip = true; });
 
 img.onload = () => { buildGround(); try { SUN = initSun(); } catch (e) { console.warn('WebGL sol no disponible', e); SUN = null; } try { GLX = initGLX(buildWorld()); } catch (e) { console.warn('WebGL escenas no disponible', e); GLX = null; } document.getElementById('load').remove(); requestAnimationFrame(frame); };

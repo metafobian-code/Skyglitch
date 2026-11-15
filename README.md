@@ -4,7 +4,7 @@ Una pradera con una fogata y tres faroles bajo un cielo que no funciona bien. Ca
 
 Todo se dibuja en tiempo real con shaders WebGL escritos a mano, y la música dreamcore también se genera en vivo con Web Audio. No usa librerías ni dependencias externas.
 
-![Las seis escenas](docs/escenas.jpg)
+![Las seis escenas](escenas.jpg)
 
 ## Los cielos
 
@@ -18,19 +18,19 @@ Todo se dibuja en tiempo real con shaders WebGL escritos a mano, y la música dr
 | 5 | Día | Cúmulos con sombra propia; sus sombras avanzan sobre el campo. |
 | 6 | Sol gigante | Plasma solar con corona, el pasto se seca y arde, queda en cenizas, el polvo se va al universo y todo resuena. |
 
-![La escena del sol](docs/sol.jpg)
+![La escena del sol](sol.jpg)
 
 En todas las escenas la fogata tiene llamas vivas y humo, el pasto se mece con el viento y los faroles iluminan el suelo.
 
 ## Música
 
-El botón **♪ música** activa una pieza dreamcore generativa (72 BPM, pads con reverberación, caja musical, cinta que ondula y crujido de vinilo) que cambia con cada cielo. En `media/cielo-en-error-dreamcore.mp3` hay una grabación de dos vueltas completas.
+El botón **♪ música** activa una pieza dreamcore generativa (72 BPM, pads con reverberación, caja musical, cinta que ondula y crujido de vinilo) que cambia con cada cielo.
 
 ## Controles
 
 - **Clic** en la imagen o **flecha derecha**: siguiente cielo
 - **Espacio** o botón **pausa**: pausar y seguir
-- **♪ música**: activar o silenciar el sonido
+- **♪ música**: activar o silenciar el sonido (también se activa con el primer toque o tecla)
 
 ## Ver en línea con GitHub Pages
 
@@ -54,9 +54,7 @@ y abre `http://localhost:8000`.
 ```
 index.html                         toda la animación, los shaders y la música
 scene.jpg                          la imagen base (pradera y cielo original)
-media/cielo-en-error-dreamcore.mp3 grabación de la música
-docs/                              capturas para este README
-.nojekyll                          hace que GitHub Pages sirva los archivos tal cual
+escenas.jpg, sol.jpg               capturas para este README
 ```
 
 ## Requisitos
