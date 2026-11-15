@@ -24,7 +24,7 @@ En todas las escenas la fogata tiene llamas vivas y humo, el pasto se mece con e
 
 ## Música
 
-El botón **♪ música** activa una pieza dreamcore generativa (72 BPM, pads con reverberación, caja musical, cinta que ondula y crujido de vinilo) que cambia con cada cielo.
+El botón **♪ música** activa una pieza dreamcore generativa (72 BPM, pads con reverberación, caja musical y cinta que ondula) que cambia con cada cielo.
 
 ## Controles
 
